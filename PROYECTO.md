@@ -182,7 +182,7 @@ From a live API test (`Buscar` method) and INEGI docs:
 **T0.1 — INEGI token** ✅ DONE. Token is in `.env.local` as `INEGI_TOKEN`.
 Never commit it.
 
-**T0.2 — Scaffold**
+**T0.2 — Scaffold** ✅ DONE
 - `docker-compose.yml`: Postgres 16, named volume, port 5432.
 - `DATABASE_URL` in `.env.local`; confirm `.env.local` and `etl/data/raw/` are
   gitignored.

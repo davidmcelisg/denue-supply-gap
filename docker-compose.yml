@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    container_name: denue_supply_gap_db
+    environment:
+      POSTGRES_USER: denue
+      POSTGRES_PASSWORD: denue
+      POSTGRES_DB: denue
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./etl/data/raw:/raw:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U denue -d denue"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

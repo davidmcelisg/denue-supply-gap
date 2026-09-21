@@ -1,0 +1,17 @@
+# secrets
+.env.local
+.env*.local
+
+# raw downloads
+etl/data/raw/
+
+# node
+node_modules/
+*.tsbuildinfo
+
+# next.js
+web/.next/
+web/out/
+
+# os
+.DS_Store

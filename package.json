@@ -1,0 +1,17 @@
+{
+  "name": "denue-supply-gap-etl",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sql": "tsx --env-file=.env.local etl/scripts/run-sql.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
