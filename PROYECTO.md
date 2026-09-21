@@ -199,14 +199,14 @@ lists the three schemas.
 
 ### Phase 1 — Bronze
 
-**T1.1 — Download DENUE bulk files**
+**T1.1 — Download DENUE bulk files** ✅ DONE (edición 05/2026)
 From INEGI Descarga Masiva, DENUE for entidades 09 and 19 (CSV). Save to
 `etl/data/raw/denue/`. If the download can't be automated reliably, stop and
 tell David which files to download manually and where to put them.
 
 *Accept:* files present, sizes and row counts logged.
 
-**T1.2 — Download AGEB population**
+**T1.2 — Download AGEB population** ✅ DONE
 Censo de Población y Vivienda 2020, **urban AGEB and manzana results** for 09
 and 19. Save to `etl/data/raw/censo/`.
 
@@ -216,7 +216,7 @@ assume. Population column is expected to be `POBTOT`; confirm.
 
 *Accept:* files present, row counts logged.
 
-**T1.2b — Inspection script (run before any loader)**
+**T1.2b — Inspection script (run before any loader)** ✅ DONE
 `etl/scripts/inspect.ts`: for each raw file, print detected encoding, delimiter,
 column names, first 5 rows, and per-column null/empty counts over the first
 10,000 rows.
@@ -227,7 +227,7 @@ column names, first 5 rows, and per-column null/empty counts over the first
 2. Accented text renders correctly under the chosen encoding.
 3. How AGEB-total rows are identified in the Censo file.
 
-**T1.3 — Load bronze**
+**T1.3 — Load bronze** ✅ DONE
 ```
 bronze.denue_raw        -- every source column as text
                         -- + source_file, edicion, ingested_at
