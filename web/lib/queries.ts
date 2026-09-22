@@ -1,0 +1,129 @@
+// Query layer. All arithmetic, ranking and aggregation happens in SQL over
+// gold tables (PROYECTO.md §0.2). `indice`, `esperado`, `banda`, `percentil`
+// are resolved per `demanda` here, never in React.
+import { sql } from './db';
+import {
+  BANDAS, PAGE_SIZE,
+  type Banda, type Demanda, type DetalleAgeb, type FilaAgeb, type FilaScian,
+  type FiltrosExplorar, type NivelScian, type RespuestaExplorar, type ResultadoBusqueda,
+} from './types';
+
+// Column names for the chosen demand proxy. Only these two shapes exist, so
+// the switch is exhaustive and the fragments are safe to inline.
+function columnas(demanda: Demanda) {
+  return demanda === 'comercial'
+    ? { esperado: sql`i.esperado_com`, indice: sql`i.indice_comercial`, percentil: sql`i.percentil_com`, banda: sql`i.banda_com` }
+    : { esperado: sql`i.esperado_pob`, indice: sql`i.indice_pob`, percentil: sql`i.percentil_pob`, banda: sql`i.banda_pob` };
+}
+
+async function contexto(nivel: NivelScian, scianId: string) {
+  const [cfg, nodo, totales] = await Promise.all([
+    sql<{ clave: string; valor: string }[]>`SELECT clave, valor FROM gold.config`,
+    sql<{ nombre: string }[]>`SELECT nombre FROM gold.scian_nodo WHERE nivel_scian = ${nivel} AND scian_id = ${scianId}`,
+    sql<{ entidad_id: string; n_total: number }[]>`
+      SELECT entidad_id, n_total FROM gold.tasa_scian WHERE nivel_scian = ${nivel} AND scian_id = ${scianId}`,
+  ]);
+  const c = Object.fromEntries(cfg.map((r) => [r.clave, r.valor]));
+  return {
+    scianNombre: nodo[0]?.nombre ?? '',
+    nTotalPorEntidad: Object.fromEntries(totales.map((t) => [t.entidad_id, t.n_total])),
+    edicionDenue: c.edicion_denue,
+    anioCenso: Number(c.anio_censo),
+    alpha: Number(c.alpha),
+  };
+}
+
+export async function explorarPorScian(f: FiltrosExplorar): Promise<RespuestaExplorar> {
+  const col = columnas(f.demanda);
+  const offset = (f.pagina - 1) * PAGE_SIZE;
+
+  // Non-confiable rows never rank first (§1.4): they sort after all confiable rows.
+  const orden = {
+    indice_asc: sql`i.confiable DESC, ${col.indice} ASC, i.ageb_key`,
+    indice_desc: sql`i.confiable DESC, ${col.indice} DESC, i.ageb_key`,
+    poblacion_desc: sql`i.confiable DESC, i.poblacion DESC, i.ageb_key`,
+    n_estab_desc: sql`i.confiable DESC, i.n_estab DESC, i.ageb_key`,
+  }[f.orden];
+
+  const filtro = sql`
+    i.nivel_scian = ${f.nivel} AND i.scian_id = ${f.scianId}
+    AND i.entidad_id = ANY(${f.entidades}) AND i.poblacion >= ${f.minPob}`;
+
+  const [filas, resumenRows, bandaRows, ctx] = await Promise.all([
+    sql<FilaAgeb[]>`
+      SELECT i.ageb_key AS "agebKey", m.nombre AS "municipioNombre", e.nombre AS "entidadNombre",
+             i.poblacion, i.n_estab AS "nEstab", i.n_estab_total_ageb AS "nEstabTotalAgeb",
+             ${col.esperado} AS esperado, ${col.indice} AS indice, ${col.percentil} AS percentil,
+             ${col.banda} AS banda, i.confiable
+      FROM gold.indice_suministro i
+      JOIN silver.ageb a ON a.ageb_key = i.ageb_key
+      JOIN silver.municipio m ON m.id = a.municipio_id
+      JOIN silver.entidad e ON e.id = i.entidad_id
+      WHERE ${filtro}
+      ORDER BY ${orden}
+      LIMIT ${PAGE_SIZE} OFFSET ${offset}`,
+    sql<{ n: number; mediana: number | null }[]>`
+      SELECT count(*)::int AS n, round((percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col.indice}))::numeric, 4) AS mediana
+      FROM gold.indice_suministro i WHERE ${filtro}`,
+    sql<{ banda: Banda; n: number }[]>`
+      SELECT ${col.banda} AS banda, count(*)::int AS n
+      FROM gold.indice_suministro i WHERE ${filtro} GROUP BY 1`,
+    contexto(f.nivel, f.scianId),
+  ]);
+
+  const conteoPorBanda = Object.fromEntries(BANDAS.map((b) => [b, 0])) as Record<Banda, number>;
+  for (const r of bandaRows) conteoPorBanda[r.banda] = r.n;
+
+  return {
+    filas,
+    total: resumenRows[0].n,
+    resumen: { nAgebs: resumenRows[0].n, medianaIndice: resumenRows[0].mediana ?? 0, conteoPorBanda },
+    contexto: ctx,
+  };
+}
+
+export async function detallarAgeb(agebKey: string, demanda: Demanda, nivel: NivelScian): Promise<FilaScian[]> {
+  const col = columnas(demanda);
+  return sql<FilaScian[]>`
+    SELECT i.scian_id AS "scianId", n.nombre AS "scianNombre", i.nivel_scian AS nivel,
+           i.n_estab AS "nEstab", ${col.esperado} AS esperado, ${col.indice} AS indice,
+           ${col.percentil} AS percentil, ${col.banda} AS banda, i.confiable
+    FROM gold.indice_suministro i
+    JOIN gold.scian_nodo n ON n.nivel_scian = i.nivel_scian AND n.scian_id = i.scian_id
+    WHERE i.ageb_key = ${agebKey} AND i.nivel_scian = ${nivel}
+    ORDER BY i.confiable DESC, ${col.indice} ASC, i.scian_id`;
+}
+
+export async function obtenerAgeb(agebKey: string): Promise<DetalleAgeb | null> {
+  const rows = await sql<DetalleAgeb[]>`
+    SELECT a.ageb_key AS "agebKey", m.nombre AS "municipioNombre", a.entidad_id AS "entidadId",
+           e.nombre AS "entidadNombre", a.poblacion,
+           (SELECT count(*)::int FROM silver.establecimiento s WHERE s.ageb_key = a.ageb_key) AS "nEstabTotalAgeb",
+           a.es_elegible AS "esElegible"
+    FROM silver.ageb a
+    JOIN silver.municipio m ON m.id = a.municipio_id
+    JOIN silver.entidad e ON e.id = a.entidad_id
+    WHERE a.ageb_key = ${agebKey}`;
+  return rows[0] ?? null;
+}
+
+// Typeahead: accent-insensitive, matches code prefix or any word of the name.
+export async function buscarScian(q: string, nivel?: NivelScian): Promise<ResultadoBusqueda[]> {
+  const term = q.trim();
+  if (term.length < 2) return [];
+  return sql<ResultadoBusqueda[]>`
+    SELECT scian_id AS "scianId", nombre AS "scianNombre", nivel_scian AS nivel
+    FROM gold.scian_nodo
+    WHERE busqueda ILIKE '%' || lower(unaccent(${term})) || '%'
+      AND (${nivel ?? null}::text IS NULL OR nivel_scian = ${nivel ?? null})
+    ORDER BY (scian_id LIKE ${term + '%'}) DESC,
+             array_position(ARRAY['sector','subsector','clase'], nivel_scian),
+             scian_id
+    LIMIT 20`;
+}
+
+export async function obtenerContexto() {
+  const cfg = await sql<{ clave: string; valor: string }[]>`SELECT clave, valor FROM gold.config`;
+  const c = Object.fromEntries(cfg.map((r) => [r.clave, r.valor]));
+  return { edicionDenue: c.edicion_denue, anioCenso: Number(c.anio_censo), alpha: Number(c.alpha), minConfiable: Number(c.min_confiable), minPoblacion: Number(c.min_poblacion) };
+}

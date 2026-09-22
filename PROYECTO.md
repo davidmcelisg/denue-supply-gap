@@ -390,7 +390,7 @@ over eligible AGEBs. Only clases present in ≥ 20 AGEBs; only pairs with
 
 ### Phase 4 — Query layer
 
-**T4.1 — Types and queries** in `web/lib/queries.ts` (scaffold `web/` now with
+**T4.1 — Types and queries** ✅ DONE in `web/lib/queries.ts` (scaffold `web/` now with
 `create-next-app`, TypeScript, App Router).
 
 ```ts
