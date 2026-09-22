@@ -134,15 +134,11 @@ cp web/.env.local.example web/.env.local
 npm --prefix web install
 ```
 
-Production build + start (use this for the demo; dev mode is ~2 s per AGEB
-page because of React dev tooling):
+Production build + start — **use this for the demo** (dev mode is ~2 s per
+AGEB page because of React dev tooling):
 
 ```bash
-npm --prefix web run build
-```
-
-```bash
-npm --prefix web start
+npm --prefix web run build && npm --prefix web start
 ```
 
 Open http://localhost:3000.
