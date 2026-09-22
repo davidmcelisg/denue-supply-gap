@@ -93,7 +93,10 @@ Expected: `denue_raw` 462,732 + 211,349 rows, `censo_ageb_raw` 68,941 +
 
 ## 4. Build silver + gold (~80 s, repeatable)
 
-Runs every `etl/sql/*.sql` in order. Never touches loaded bronze data.
+Runs every `etl/sql/*.sql` in order. Never touches loaded bronze data. The
+last file, `90_checks.sql`, asserts the invariants from PROYECTO.md §5 (rate
+identity, zero rows, count reconciliation, join rate ≥ 90 %, curated AGEBs,
+Polanco sanity) and fails the run if any breaks.
 
 ```bash
 npm run sql
