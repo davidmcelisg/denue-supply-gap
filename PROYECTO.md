@@ -469,7 +469,7 @@ Page size: 25. Offset pagination (bounded sets, indexed sort column).
 
 ---
 
-### Phase 5 — Web
+### Phase 5 — Web ✅ DONE (2026-09-21; T3.4 /afinidad not built)
 
 **Screens**
 - `/` — short landing: what the product answers, one-paragraph method, links to

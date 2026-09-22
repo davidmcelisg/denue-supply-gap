@@ -1,69 +1,64 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { hrefExplorar } from '@/lib/params';
+import { obtenerContexto } from '@/lib/queries';
 
-export default function Home() {
+// Curated findings: AGEBs and categories validated by hand in Phase 3
+// (PROYECTO.md T3.3 spot-check). Each link is a fully prefilled URL.
+const HALLAZGOS = [
+  {
+    titulo: 'Tiendas de abarrotes en Nuevo León',
+    texto: 'Las colonias residenciales de alto ingreso (Cumbres, Contry, Del Valle) tienen una décima parte de las tiendas de la esquina que tendría un AGEB típico de su tamaño. Es un patrón de urbanismo, no de demanda insatisfecha necesariamente — el índice lo muestra, la interpretación es tuya.',
+    href: hrefExplorar({ entidades: ['19'], nivel: 'clase', scianId: '461110', orden: 'indice_asc' }),
+  },
+  {
+    titulo: 'Cafeterías en Ciudad de México',
+    texto: 'Los AGEB más sub-ofertados son tractos grandes de Iztapalapa, Gustavo A. Madero y Xochimilco: 11 a 14 cafeterías esperadas, cero registradas. En el otro extremo, Roma Norte tiene 8 veces la tasa típica.',
+    href: hrefExplorar({ entidades: ['09'], nivel: 'clase', scianId: '722515', orden: 'indice_asc' }),
+  },
+  {
+    titulo: 'Polanco: población vs. actividad comercial',
+    texto: 'Por habitantes, Polanco tiene 2.6× los restaurantes típicos. Pero relativo a su propia masa comercial (1,070 establecimientos para 4,030 residentes) los restaurantes son una fracción menor que en un AGEB típico. Cambiar la base de demanda cambia la lectura — y eso es intencional.',
+    href: '/ageb/0901600010158?demanda=comercial&nivel=clase',
+  },
+];
+
+export default async function Home() {
+  const ctx = await obtenerContexto();
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="max-w-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight">¿Qué categorías de negocio sobran o faltan en cada AGEB?</h1>
+      <p className="mt-3 text-stone-700 leading-relaxed">
+        Para cada AGEB urbano de Ciudad de México y Nuevo León, y cada categoría SCIAN, comparamos cuántos
+        establecimientos hay contra cuántos <em>habría</em> si ese AGEB tuviera la tasa típica de su entidad
+        (establecimientos por habitante, o por establecimiento total). El cociente es el índice: menor a 1 es
+        sub-oferta, mayor a 1 es sobre-oferta. Fuente: DENUE {ctx.edicionDenue} y Censo {ctx.anioCenso}.
+        Es oferta relativa — DENUE no tiene ingresos, tráfico ni rentabilidad.
+      </p>
+
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link href="/explorar" className="rounded border border-stone-300 p-4 hover:border-stone-900">
+          <div className="font-medium">Explorar por categoría →</div>
+          <div className="text-sm text-stone-600 mt-1">Fija una categoría y ordena los AGEB de más faltante a más saturado.</div>
+        </Link>
+        <Link href="/ageb/1903900014233?demanda=poblacion&nivel=clase" className="rounded border border-stone-300 p-4 hover:border-stone-900">
+          <div className="font-medium">Explorar por AGEB →</div>
+          <div className="text-sm text-stone-600 mt-1">Fija un lugar y ve qué categorías le faltan. Ejemplo: Cumbres, Monterrey.</div>
+        </Link>
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold">Tres hallazgos para empezar</h2>
+      <ul className="mt-3 flex flex-col gap-4">
+        {HALLAZGOS.map((h) => (
+          <li key={h.href} className="border-l-2 border-stone-300 pl-4">
+            <Link href={h.href} className="font-medium underline decoration-stone-300 hover:decoration-stone-900">{h.titulo}</Link>
+            <p className="text-sm text-stone-600 mt-1 leading-relaxed">{h.texto}</p>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-10 text-sm text-stone-500">
+        Detalles del método, umbrales y limitaciones en <Link href="/metodologia" className="underline">Metodología</Link>.
+      </p>
     </div>
   );
 }
