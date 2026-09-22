@@ -72,7 +72,9 @@ ALTER TABLE silver.establecimiento
 -- Rule 2 (near-duplicates): same nombre_norm within ~50 m -> posible_duplicado,
 -- never merged. Pairs are found by bucketing into ~55 m grid cells and
 -- comparing neighbouring cells, then filtering with an equirectangular
--- distance (accurate enough at 50 m). Empty / very short names are skipped.
+-- distance (accurate enough at 50 m). Empty / very short names are skipped,
+-- as are DENUE's "<actividad> SIN NOMBRE" placeholders for unnamed businesses:
+-- two unnamed fruit stands 30 m apart are not duplicates of each other.
 CREATE TEMP TABLE grid AS
 SELECT clee, nombre_norm,
        floor(lat / 0.0005)::int AS cy,
@@ -80,6 +82,7 @@ SELECT clee, nombre_norm,
        lat, lon
 FROM silver.establecimiento
 WHERE length(nombre_norm) >= 4
+  AND nombre_norm NOT LIKE '%SIN NOMBRE%'
   AND NOT ('coord_sospechosa' = ANY(calidad_flags));
 CREATE INDEX ON grid (nombre_norm, cy, cx);
 

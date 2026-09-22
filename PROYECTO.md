@@ -294,7 +294,8 @@ Exactly these cleaning rules:
    whitespace, strip legal suffixes (`S.A. DE C.V.`, `SA DE CV`, `S. DE R.L.`,
    `S.C.`, `S.A.P.I.`). Keep originals.
 2. **Dedupe on CLEE** (true key). Near-duplicates (same `nombre_norm`, within
-   ~50m) get flagged `posible_duplicado`, never merged.
+   ~50m) get flagged `posible_duplicado`, never merged. Names containing
+   `SIN NOMBRE` (DENUE placeholder for unnamed businesses) are excluded.
 3. **Coordinate sanity**: outside the entidad bounding box → `coord_sospechosa`.
 4. **CLEE consistency**: embedded entidad/municipio/clase disagree with parsed
    columns → `clee_inconsistente`.
