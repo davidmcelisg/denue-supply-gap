@@ -82,3 +82,13 @@ export type DetalleAgeb = {
   nEstabTotalAgeb: number | null;   // NULL when the AGEB is not eligible (no gold rows)
   esElegible: boolean;
 };
+
+export type ResumenCalidad = {
+  cleeInconsistentePct: number;
+  posibleDuplicadoPct: number;
+  sinAgebPct: number;
+  coordSospechosaN: number;
+  agebNoElegibleN: Record<string, number>;
+  agebNoElegiblePobShare: Record<string, number>;
+  retailShare: Record<string, number>;
+};

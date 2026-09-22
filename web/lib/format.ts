@@ -4,7 +4,8 @@ import type { Banda, Demanda, NivelScian, OrdenExplorar } from './types';
 const es = 'es-MX';
 export const fmtInt = (n: number) => n.toLocaleString(es, { maximumFractionDigits: 0 });
 export const fmtDec = (n: number, d = 2) => n.toLocaleString(es, { minimumFractionDigits: d, maximumFractionDigits: d });
-export const fmtPct = (ratio: number) => ratio.toLocaleString(es, { style: 'percent', maximumFractionDigits: 0 });
+export const fmtPct = (ratio: number, d = 0) =>
+  ratio.toLocaleString(es, { style: 'percent', minimumFractionDigits: d, maximumFractionDigits: d });
 
 export const BANDA_LABEL: Record<Banda, string> = {
   muy_bajo: 'Muy bajo', bajo: 'Bajo', normal: 'Normal', alto: 'Alto', muy_alto: 'Muy alto',

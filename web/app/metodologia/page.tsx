@@ -1,8 +1,9 @@
-import { obtenerContexto } from '@/lib/queries';
+import { obtenerContexto, obtenerResumenCalidad } from '@/lib/queries';
 import { BandaBadge } from '@/components/Banda';
+import { fmtInt, fmtPct } from '@/lib/format';
 
 export default async function Metodologia() {
-  const ctx = await obtenerContexto();
+  const [ctx, r] = await Promise.all([obtenerContexto(), obtenerResumenCalidad()]);
   return (
     <article className="max-w-3xl leading-relaxed text-stone-800">
       <h1 className="text-2xl font-semibold tracking-tight">Metodología</h1>
@@ -35,7 +36,7 @@ esperado(a,s)  = población(a) × tasa(s,e)
       </p>
       <p className="mt-2 text-sm">
         <strong>Bases por entidad.</strong> CDMX y Nuevo León se comparan cada una contra sí misma; sus economías difieren
-        (por ejemplo, el comercio al por menor es 45 % de los establecimientos en CDMX y 35 % en NL).
+        (por ejemplo, el comercio al por menor es {fmtPct(r.retailShare['09'])} de los establecimientos en CDMX y {fmtPct(r.retailShare['19'])} en NL).
       </p>
       <p className="mt-2 text-sm">
         <strong>Regla de grano.</strong> El índice de un sector se calcula con conteos a nivel sector, no agregando índices de sus clases.
@@ -66,14 +67,14 @@ esperado(a,s)  = población(a) × tasa(s,e)
         <li><strong>Gravedad comercial.</strong> La población residencial representa mal la demanda donde la población diurna es muy distinta. Para eso existe la variante comercial.</li>
         <li><strong>Vigencias distintas.</strong> DENUE {ctx.edicionDenue} contra población de {ctx.anioCenso}. El índice compara oferta actual con población de hace varios años.</li>
         <li><strong>El estrato es un rango,</strong> no una plantilla exacta. Nunca se muestran estimaciones puntuales de empleo.</li>
-        <li><strong>Solo AGEB urbanas.</strong> Los establecimientos en localidades rurales no se unen a un AGEB del Censo y quedan fuera (≈ 0.6 % de los registros; concentrados en municipios periféricos como Tlalpan, Milpa Alta, García y Zuazua). Además, los AGEB con menos de {ctx.minPoblacion} habitantes se excluyen: en Nuevo León son muchos (716) pero suman ≈ 2 % de la población.</li>
+        <li><strong>Solo AGEB urbanas.</strong> Los establecimientos en localidades rurales no se unen a un AGEB del Censo y quedan fuera (≈ {fmtPct(r.sinAgebPct, 1)} de los registros; concentrados en municipios periféricos como Tlalpan, Milpa Alta, García y Zuazua). Además, los AGEB con menos de {ctx.minPoblacion} habitantes se excluyen: en Nuevo León son muchos ({fmtInt(r.agebNoElegibleN['19'])}) pero suman ≈ {fmtPct(r.agebNoElegiblePobShare['19'])} de la población.</li>
       </ol>
 
       <h2 className="mt-8 text-lg font-semibold">Calidad de datos</h2>
       <p className="mt-2 text-sm">
-        Ningún registro se borra por calidad; se marca. Marcas actuales: clave CLEE inconsistente con las columnas (13.6 %, casi siempre
-        reclasificación de actividad posterior a la creación de la clave), posible duplicado (3.4 %: mismo nombre normalizado a &lt; 50 m,
-        nunca fusionado), sin AGEB (0.6 %) y coordenadas fuera de la entidad (8 registros). Nombres normalizados: mayúsculas, sin acentos,
+        Ningún registro se borra por calidad; se marca. Marcas actuales: clave CLEE inconsistente con las columnas ({fmtPct(r.cleeInconsistentePct, 1)}, casi siempre
+        reclasificación de actividad posterior a la creación de la clave), posible duplicado ({fmtPct(r.posibleDuplicadoPct, 1)}: mismo nombre normalizado a &lt; 50 m,
+        nunca fusionado), sin AGEB ({fmtPct(r.sinAgebPct, 1)}) y coordenadas fuera de la entidad ({fmtInt(r.coordSospechosaN)} registros). Nombres normalizados: mayúsculas, sin acentos,
         sin sufijos legales (S.A. de C.V., S. de R.L., etc.); los originales se conservan.
       </p>
     </article>

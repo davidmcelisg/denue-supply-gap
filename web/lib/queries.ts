@@ -5,7 +5,8 @@ import { sql } from './db';
 import {
   BANDAS, PAGE_SIZE,
   type Banda, type Demanda, type DetalleAgeb, type FilaAgeb, type FilaScian,
-  type FiltrosExplorar, type NivelScian, type RespuestaExplorar, type ResultadoBusqueda,
+  type FiltrosExplorar, type NivelScian, type ResumenCalidad, type RespuestaExplorar,
+  type ResultadoBusqueda,
 } from './types';
 
 // Column names for the chosen demand proxy. Only these two shapes exist, so
@@ -130,4 +131,27 @@ export async function obtenerContexto() {
   const cfg = await sql<{ clave: string; valor: string }[]>`SELECT clave, valor FROM gold.config`;
   const c = Object.fromEntries(cfg.map((r) => [r.clave, r.valor]));
   return { edicionDenue: c.edicion_denue, anioCenso: Number(c.anio_censo), alpha: Number(c.alpha), minConfiable: Number(c.min_confiable), minPoblacion: Number(c.min_poblacion) };
+}
+
+export async function obtenerResumenCalidad(): Promise<ResumenCalidad> {
+  const rows = await sql<{ clave: string; valor: number }[]>`
+    SELECT clave, valor FROM gold.resumen_calidad`;
+  const v = Object.fromEntries(rows.map((r) => [r.clave, r.valor]));
+  const need = (k: string) => {
+    const x = v[k];
+    if (x == null) throw new Error(`gold.resumen_calidad missing ${k}`);
+    return x;
+  };
+  return {
+    cleeInconsistentePct: need('clee_inconsistente_pct'),
+    posibleDuplicadoPct: need('posible_duplicado_pct'),
+    sinAgebPct: need('sin_ageb_pct'),
+    coordSospechosaN: need('coord_sospechosa_n'),
+    agebNoElegibleN: { '09': need('ageb_no_elegible_n_09'), '19': need('ageb_no_elegible_n_19') },
+    agebNoElegiblePobShare: {
+      '09': need('ageb_no_elegible_pob_share_09'),
+      '19': need('ageb_no_elegible_pob_share_19'),
+    },
+    retailShare: { '09': need('retail_share_09'), '19': need('retail_share_19') },
+  };
 }
