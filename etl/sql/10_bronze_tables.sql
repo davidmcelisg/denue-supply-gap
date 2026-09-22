@@ -287,3 +287,14 @@ CREATE TABLE bronze.censo_ageb_raw (
   anio        int  NOT NULL,
   ingested_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Official SCIAN 2023 structure (estructura2023.xlsx, sheet "Español-Inglés").
+-- Loaded by etl/scripts/load-scian.ts. Names keep the raw trailing "T" marker.
+DROP TABLE IF EXISTS bronze.scian_raw;
+CREATE TABLE bronze.scian_raw (
+  codigo      text NOT NULL,
+  nombre_es   text NOT NULL,
+  nombre_en   text,
+  source_file text NOT NULL,
+  ingested_at timestamptz NOT NULL DEFAULT now()
+);

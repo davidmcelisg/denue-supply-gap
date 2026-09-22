@@ -5,14 +5,16 @@
   "scripts": {
     "sql": "tsx --env-file=.env.local etl/scripts/run-sql.ts",
     "inspect": "tsx etl/scripts/inspect.ts",
-    "load:bronze": "tsx --env-file=.env.local etl/scripts/load-bronze.ts"
+    "load:bronze": "tsx --env-file=.env.local etl/scripts/load-bronze.ts",
+    "load:scian": "tsx --env-file=.env.local etl/scripts/load-scian.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
     "csv-parse": "^7.0.2",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "xlsx": "^0.18.5"
   },
   "dependencies": {
     "pg": "^8.23.0"

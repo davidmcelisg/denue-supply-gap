@@ -243,7 +243,7 @@ columns. Load all Censo rows (all row types); filtering happens in silver.
 
 ### Phase 2 — Silver
 
-**T2.1 — SCIAN hierarchy**
+**T2.1 — SCIAN hierarchy** ✅ DONE
 ```
 silver.scian_sector      -- id, nombre
 silver.scian_subsector   -- id, sector_id, nombre
@@ -252,14 +252,14 @@ silver.scian_subrama     -- id, rama_id, nombre
 silver.scian_clase       -- id, subrama_id, nombre
 ```
 Clase ids are 6 digits; parents are prefixes (sector 2, subsector 3, rama 4,
-subrama 5). SCIAN sectors 31–33, 44–45, 48–49 are grouped ranges — handle each
+subrama 5). SCIAN sectors 31–33 and 48–49 are grouped ranges (43 and 46 are standalone in SCIAN) — handle each
 group as a single sector. Names from DENUE's class text and the official SCIAN
 catalog.
 
 *Accept:* zero orphans at every level; every clase in bronze resolves to a
 sector.
 
-**T2.2 — Estrato**
+**T2.2 — Estrato** ✅ DONE
 ```
 silver.estrato -- id, etiqueta, personal_min, personal_max
 ```
@@ -267,7 +267,7 @@ Built from distinct values in bronze.
 
 *Accept:* every bronze estrato value maps to a row.
 
-**T2.3 — Geography**
+**T2.3 — Geography** ✅ DONE
 ```
 silver.municipio -- id (entidad+municipio, 5 chars), entidad_id, nombre
 silver.ageb      -- ageb_key (PK), entidad_id, municipio_id, localidad_id,
@@ -282,7 +282,7 @@ per entidad. Target ≥90%. If lower, report unmatched counts by municipio befor
 proceeding (rural areas explain some loss and concentrate in specific
 municipios; key-construction bugs look different — uniform loss everywhere).
 
-**T2.4 — Establecimiento**
+**T2.4 — Establecimiento** ✅ DONE
 ```
 silver.establecimiento
   clee (PK), id_establecimiento, nombre, nombre_norm,
