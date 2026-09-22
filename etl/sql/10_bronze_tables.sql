@@ -1,9 +1,10 @@
 -- Bronze: every source column as text, exactly as delivered. Never edited.
+-- Idempotent DDL: a full `npm run sql` must never drop loaded bronze data.
+-- To reload from scratch, drop the table by hand, then run the loader.
 -- Column lists mirror the raw CSV headers (see etl/scripts/inspect.ts).
 -- Loaded by etl/scripts/load-bronze.ts; this file only defines the tables.
 
-DROP TABLE IF EXISTS bronze.denue_raw;
-CREATE TABLE bronze.denue_raw (
+CREATE TABLE IF NOT EXISTS bronze.denue_raw (
   "id" text,
   "clee" text,
   "nom_estab" text,
@@ -51,8 +52,7 @@ CREATE TABLE bronze.denue_raw (
   ingested_at timestamptz NOT NULL DEFAULT now()
 );
 
-DROP TABLE IF EXISTS bronze.censo_ageb_raw;
-CREATE TABLE bronze.censo_ageb_raw (
+CREATE TABLE IF NOT EXISTS bronze.censo_ageb_raw (
   "ENTIDAD" text,
   "NOM_ENT" text,
   "MUN" text,
@@ -290,8 +290,7 @@ CREATE TABLE bronze.censo_ageb_raw (
 
 -- Official SCIAN 2023 structure (estructura2023.xlsx, sheet "Español-Inglés").
 -- Loaded by etl/scripts/load-scian.ts. Names keep the raw trailing "T" marker.
-DROP TABLE IF EXISTS bronze.scian_raw;
-CREATE TABLE bronze.scian_raw (
+CREATE TABLE IF NOT EXISTS bronze.scian_raw (
   codigo      text NOT NULL,
   nombre_es   text NOT NULL,
   nombre_en   text,
