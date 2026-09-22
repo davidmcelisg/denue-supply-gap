@@ -313,7 +313,7 @@ rows deleted for quality reasons.
 Eligible scope for every gold computation: establishments whose AGEB exists in
 silver.ageb with `es_elegible = true`.
 
-**T3.1 — Counts**
+**T3.1 — Counts** ✅ DONE
 ```
 gold.conteo_ageb_scian
   ageb_key, entidad_id, nivel_scian, scian_id, n_estab,
@@ -333,7 +333,7 @@ only (T3.2 rule) and note the restriction in `contexto`.
 equals the count of eligible establishments; hand-verify one AGEB × clase
 against silver.
 
-**T3.2 — Rates**
+**T3.2 — Rates** ✅ DONE
 ```
 gold.tasa_scian
   entidad_id, nivel_scian, scian_id, n_total, pob_total, ntot_total,
@@ -343,7 +343,7 @@ gold.tasa_scian
 
 *Accept:* one row per (entidad, nivel, scian) present in T3.1.
 
-**T3.3 — Index**
+**T3.3 — Index** ✅ DONE
 ```
 gold.indice_suministro
   ageb_key, entidad_id, nivel_scian, scian_id,
@@ -365,7 +365,17 @@ Indexes: `(nivel_scian, scian_id, entidad_id, indice_pob)`,
 - A single-node query across all AGEBs returns in < 100 ms.
 - Spot-check three AGEBs David knows personally; numbers should be explainable.
 
-**T3.4 — Affinity (OPTIONAL — cut if time is short)**
+*Spot-check result (2026-09-21, confirmed by David — reuse for curated findings):*
+
+| Area | ageb_key | pob | estabs | restaurantes 722511 | abarrotes 461110 | gimnasios 713943 |
+|---|---|---|---|---|---|---|
+| Del Valle, San Pedro GG | `1901900010083` | 1,374 | 1,292 | 38.4 (com. gravity) | 1.37 | 11.4 |
+| Cumbres, Monterrey | `1903900014233` | 3,015 | 60 | 0.43 | 0.09 | 1.17 |
+| Santa Fe, CDMX | `0901000011542` | 2,898 | 489 | 11.4 | 0.15 | 4.92 |
+| Roma Norte, CDMX | `0901500011017` | 4,538 | 669 | 8.6 | 0.45 | 0.50 |
+| Polanco, CDMX | `0901600010158` | 4,030 | 1,070 | 2.59 pob / 0.58 com | — | — |
+
+**T3.4 — Affinity (OPTIONAL — cut if time is short)** ⏭ DEFERRED — revisit after Phase 5 if time allows
 ```
 gold.afinidad_pares
   entidad_id, clase_a, clase_b, n_co, lift
