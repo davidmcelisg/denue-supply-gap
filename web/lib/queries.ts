@@ -112,18 +112,27 @@ export async function obtenerAgeb(agebKey: string): Promise<DetalleAgeb | null> 
   return rows[0] ?? null;
 }
 
-// Typeahead: accent-insensitive, matches code prefix or any word of the name.
+// Typeahead: accent-insensitive. Matches code/official name, or an everyday
+// synonym in gold.scian_sinonimo (those rank above name hits).
 export async function buscarScian(q: string, nivel?: NivelScian): Promise<ResultadoBusqueda[]> {
   const term = q.trim();
   if (term.length < 2) return [];
   return sql<ResultadoBusqueda[]>`
-    SELECT scian_id AS "scianId", nombre AS "scianNombre", nivel_scian AS nivel
-    FROM gold.scian_nodo
-    WHERE busqueda ILIKE '%' || lower(unaccent(${term})) || '%'
-      AND (${nivel ?? null}::text IS NULL OR nivel_scian = ${nivel ?? null})
-    ORDER BY (scian_id LIKE ${term + '%'}) DESC,
-             array_position(ARRAY['sector','subsector','clase'], nivel_scian),
-             scian_id
+    SELECT n.scian_id AS "scianId", n.nombre AS "scianNombre", n.nivel_scian AS nivel
+    FROM gold.scian_nodo n
+    LEFT JOIN LATERAL (
+      SELECT true AS hit
+      FROM gold.scian_sinonimo s
+      WHERE s.nivel_scian = n.nivel_scian AND s.scian_id = n.scian_id
+        AND lower(unaccent(s.sinonimo)) ILIKE '%' || lower(unaccent(${term})) || '%'
+      LIMIT 1
+    ) syn ON true
+    WHERE (n.busqueda ILIKE '%' || lower(unaccent(${term})) || '%' OR syn.hit)
+      AND (${nivel ?? null}::text IS NULL OR n.nivel_scian = ${nivel ?? null})
+    ORDER BY syn.hit DESC NULLS LAST,
+             (n.scian_id LIKE ${term + '%'}) DESC,
+             array_position(ARRAY['sector','subsector','clase'], n.nivel_scian),
+             n.scian_id
     LIMIT 20`;
 }
 

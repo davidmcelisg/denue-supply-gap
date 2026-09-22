@@ -187,8 +187,8 @@ Add `-v` to also delete the Postgres volume (forces a full reload next time).
   `/Applications/Docker.app/Contents/Resources/bin/docker`.
 - `npm run sql` fails on `23_silver_establecimiento.sql` with FK errors →
   bronze is empty; run step 3.
-- Typeahead finds nothing for "gimnasio" → SCIAN names are formal
-  ("Centros de acondicionamiento físico"); search by code prefix (`7139`) or
-  the official wording.
+- Typeahead should find everyday words (`gimnasio`, `taquería`, `tiendita`)
+  via `gold.scian_sinonimo`. If a word is missing, search by code prefix
+  (`7139`) or the official SCIAN wording.
 - Web pages error with `DATABASE_URL is not set` → `web/.env.local` missing
   (step 6).

@@ -40,7 +40,7 @@ export function BuscadorScian({ nivel, onSelect }: { nivel?: NivelScian; onSelec
       />
       {open && res.length === 0 && buscado === q && q.trim().length >= 2 && (
         <div className="absolute z-10 mt-1 w-full rounded border border-stone-200 bg-white p-2 text-xs text-stone-500 shadow-md">
-          Sin resultados. Los nombres son los oficiales del SCIAN (p. ej. «acondicionamiento físico», no «gimnasio»).
+          Sin resultados. Prueba otra palabra o el código SCIAN.
         </div>
       )}
       {open && res.length > 0 && (
