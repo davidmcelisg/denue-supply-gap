@@ -98,11 +98,15 @@ export async function obtenerAgeb(agebKey: string): Promise<DetalleAgeb | null> 
   const rows = await sql<DetalleAgeb[]>`
     SELECT a.ageb_key AS "agebKey", m.nombre AS "municipioNombre", a.entidad_id AS "entidadId",
            e.nombre AS "entidadNombre", a.poblacion,
-           (SELECT count(*)::int FROM silver.establecimiento s WHERE s.ageb_key = a.ageb_key) AS "nEstabTotalAgeb",
+           g.n_estab_total_ageb AS "nEstabTotalAgeb",
            a.es_elegible AS "esElegible"
     FROM silver.ageb a
     JOIN silver.municipio m ON m.id = a.municipio_id
     JOIN silver.entidad e ON e.id = a.entidad_id
+    -- establishment total is a gold value; non-eligible AGEBs have no gold rows (NULL)
+    LEFT JOIN LATERAL (
+      SELECT n_estab_total_ageb FROM gold.conteo_ageb_scian c WHERE c.ageb_key = a.ageb_key LIMIT 1
+    ) g ON true
     WHERE a.ageb_key = ${agebKey}`;
   return rows[0] ?? null;
 }

@@ -79,6 +79,6 @@ export type DetalleAgeb = {
   entidadId: string;
   entidadNombre: string;
   poblacion: number;
-  nEstabTotalAgeb: number;
+  nEstabTotalAgeb: number | null;   // NULL when the AGEB is not eligible (no gold rows)
   esElegible: boolean;
 };

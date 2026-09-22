@@ -27,7 +27,8 @@ export default async function AgebPage({ params, searchParams }: PageProps<'/age
       <p className="text-xs text-stone-500 mb-1">AGEB <span className="font-mono">{ageb.agebKey}</span></p>
       <h1 className="text-xl font-semibold leading-tight">¿Qué falta en {ageb.municipioNombre}, {ageb.entidadNombre}?</h1>
       <p className="text-sm text-stone-600 mt-1">
-        {fmtInt(ageb.poblacion)} habitantes (Censo {ctx.anioCenso}) · {fmtInt(ageb.nEstabTotalAgeb)} establecimientos (DENUE {ctx.edicionDenue})
+        {fmtInt(ageb.poblacion)} habitantes (Censo {ctx.anioCenso})
+        {ageb.nEstabTotalAgeb !== null && <> · {fmtInt(ageb.nEstabTotalAgeb)} establecimientos (DENUE {ctx.edicionDenue})</>}
       </p>
 
       {!ageb.esElegible && (
