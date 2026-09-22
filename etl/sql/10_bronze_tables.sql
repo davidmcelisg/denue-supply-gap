@@ -1,6 +1,7 @@
 -- Bronze: every source column as text, exactly as delivered. Never edited.
 -- Idempotent DDL: a full `npm run sql` must never drop loaded bronze data.
--- To reload from scratch, drop the table by hand, then run the loader.
+-- The loaders are idempotent too: they DELETE the same source_file before
+-- COPY (per file, not TRUNCATE — the other entidad may be loaded separately).
 -- Column lists mirror the raw CSV headers (see etl/scripts/inspect.ts).
 -- Loaded by etl/scripts/load-bronze.ts; this file only defines the tables.
 

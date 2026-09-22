@@ -69,8 +69,9 @@ npm run inspect
 ## 3. Load bronze (once per download)
 
 Creates the schemas and empty bronze tables, then `COPY`s the CSVs and the
-SCIAN workbook. Bronze DDL is idempotent; loading again appends, so drop the
-bronze tables by hand if you need a clean reload.
+SCIAN workbook. Bronze DDL is idempotent. The loaders replace the rows for
+each `source_file` before inserting, so a re-run is safe (it does not append
+and does not wipe the other entidad's file).
 
 ```bash
 npm run sql -- 00_

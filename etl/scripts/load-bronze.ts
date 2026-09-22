@@ -35,6 +35,8 @@ async function main() {
       const t0 = performance.now();
       process.stdout.write(`▶ ${s.table} ← ${s.path.split("/").pop()} ... `);
       await client.query("BEGIN");
+      // Replace this source_file only — the other entidad may be loaded separately.
+      await client.query(`DELETE FROM ${s.table} WHERE source_file = $1`, [s.meta.source_file]);
       // Rows land with NULL metadata, then get stamped before commit so a
       // failed COPY never leaves half-labelled rows behind.
       await client.query(`ALTER TABLE ${s.table} ALTER COLUMN ${metaCols.map((c) => `"${c}" DROP NOT NULL`).join(", ALTER COLUMN ")}`);
