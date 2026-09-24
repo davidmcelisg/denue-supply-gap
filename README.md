@@ -60,7 +60,7 @@ proyecto se usa como ID concatenando cuatro campos con ancho fijo, igual del lad
 del Censo que del lado de DENUE.
 
 - Ejemplo: `{entidad: 19 (NL), municipio: 039 (Monterrey), localidad: 0001 (Monterrey), AGEB: 4233}`
-- ID generado con ejemplo anterior: `1903900014233`
+- Nuestro ID generado con ejemplo anterior: `1903900014233`
 
 ---
 
