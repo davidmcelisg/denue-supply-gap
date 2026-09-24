@@ -1,25 +1,29 @@
 # denue-supply-gap
 
-Para cada AGEB urbano de Ciudad de México y Nuevo León, y cada categoría SCIAN,
-calcula cuántos establecimientos hay contra cuántos habría si ese AGEB tuviera
-la tasa típica de su entidad. El cociente es el índice de suministro.
-
-Datos: DENUE edición 2026-05 y Censo de Población y Vivienda 2020, ambos de
-INEGI. 674,081 establecimientos, 5,198 AGEB urbanas, 4.4 millones de filas de
-métrica precalculada.
+¿Dónde en NL y CDMX cada categoría de negocio está poco o muy suministrada
+relativo a la comparación dentro de su estado?
 
 ---
 
 ## El problema
 
-Dos preguntas, la misma tabla de gold leída por dos caminos:
+Para cada zona y cada categoría de negocio se compara cuántos establecimientos
+hay contra cuántos habría si esa zona se comportara como el promedio de su
+estado. El resultado es un solo número: por debajo de 1 hay menos de lo típico,
+por encima de 1 hay más.
 
-- **Por categoría:** ¿en qué AGEB de Nuevo León faltan tiendas de abarrotes?
-  Se fija la categoría y se ordenan los AGEB. Ruta `/explorar`.
-- **Por área:** ¿qué le falta a este AGEB de Cumbres? Se fija el AGEB y se
-  ordenan las categorías. Ruta `/ageb/[ageb_key]`.
+Aplica a las 1,200 categorías del catálogo, desde tiendas de abarrotes hasta
+bufetes jurídicos, en las 4,362 zonas evaluadas. Nada en el cálculo es
+específico de un giro.
 
-Lo que mide es **oferta relativa**, no desempeño de negocios. DENUE no tiene
+La misma tabla se lee por dos caminos, que son las dos vistas de la app:
+
+- **Por categoría:** se fija una categoría y se ordenan las zonas, de la que
+  menos tiene a la que más. Ruta `/explorar`.
+- **Por zona:** se fija una zona y se ordenan las categorías. Ruta
+  `/ageb/[ageb_key]`.
+
+Lo que mide es **oferta relativa**, no desempeño de negocios. La fuente no tiene
 ingresos, tráfico ni rentabilidad, y el producto nunca los afirma.
 
 ---
@@ -28,23 +32,18 @@ ingresos, tráfico ni rentabilidad, y el producto nunca los afirma.
 
 Tres términos de INEGI que el resto del repo da por entendidos.
 
-**DENUE**, Directorio Estadístico Nacional de Unidades Económicas. Un registro
-de establecimientos activos, un renglón por establecimiento. Se usa la descarga
-masiva, no la API: la API no regresa la clave de AGEB y sin ella el proyecto no
-existe. Un renglón, ya limpio en `silver.establecimiento`:
+**DENUE** (Directorio Estadístico Nacional de Unidades Económicas): es una base
+de datos oficial creada por el INEGI que contiene información detallada sobre
+millones de negocios y establecimientos activos en México.
 
-```
-clee          19039722514027141000000000U5
-nombre        COMBITACOS
-clase_id      722514        -> taquerías
-estrato_id    1             -> "0 a 5 personas"
-ageb_key      1903900014233
-municipio_id  19039         -> Monterrey
-```
+- Para consumir estos datos se usa la descarga masiva (adhoc) en lugar de la API
+  (ya que esta no regresa la clave AGEB).
+- Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb_key: 1903900014233...}`
 
-**SCIAN**, Sistema de Clasificación Industrial de América del Norte. Clasifica
-la actividad económica en cinco niveles anidados, donde el código de cada nivel
-es prefijo del siguiente:
+**SCIAN** (Sistema de Clasificación Industrial de América del Norte): el catálogo
+oficial utilizado en México para clasificar las actividades económicas de los
+negocios y empresas mediante códigos numéricos estandarizados. Son cinco niveles
+anidados, donde el código de cada nivel es prefijo del siguiente:
 
 ```
 sector     46      Comercio al por menor
@@ -55,21 +54,16 @@ clase      461110  Comercio al por menor en tiendas de abarrotes, ultramarinos y
 ```
 
 La UI expone tres: sector, subsector y clase. `rama` y `subrama` existen en
-silver para que la jerarquía cierre, pero no se muestran.
+nuestra categoría de datos silver para que la jerarquía cierre, pero no se
+utilizan.
 
-**AGEB**, Área Geoestadística Básica. La unidad territorial del Censo, un
-conjunto de manzanas en zona urbana, 28 en la mediana de estas dos entidades.
-Es el grano de todo el proyecto. La clave se arma
-concatenando cuatro campos con ancho fijo, igual del lado del Censo que del lado
-de DENUE:
+**AGEB** (Área Geoestadística Básica): unidad territorial usada por el INEGI para
+organizar y presentar información estadística de los censos en el país. En este
+proyecto se usa como ID concatenando cuatro campos con ancho fijo, igual del lado
+del Censo que del lado de DENUE.
 
-```
-1903900014233
-19    entidad     Nuevo León
-039   municipio   Monterrey
-0001  localidad   Monterrey
-4233  AGEB        3,015 habitantes, elegible (>= 500)
-```
+- Ejemplo: `{entidad: 19 (NL), municipio: 039 (Monterrey), localidad: 0001 (Monterrey), AGEB: 4233}`
+- ID generado con ejemplo anterior: `1903900014233`
 
 ---
 
@@ -86,62 +80,9 @@ de 2020, y eso aparece como nota al pie en cada vista de datos.
 
 ---
 
-## El índice
-
-Para un AGEB `a`, una categoría `s` y su entidad `e`:
-
-```
-tasa(s,e)      = establecimientos de s en e / población de e
-esperado(a,s)  = población(a) × tasa(s,e)
-índice(a,s)    = (n(a,s) + α) / (esperado(a,s) + α)         α = 1
-```
-
-Menor a 1 es sub-oferta, mayor a 1 es sobre-oferta. Es un cociente de
-localización con suavizado.
-
-**Variante comercial:** sustituye población por el total de establecimientos del
-AGEB como proxy de demanda, `esperado_com = total_estab(a) × N(s,e) / N_total(e)`.
-Es la lectura para lugares donde la población diurna y la residencial divergen.
-Dentro de un mismo AGEB esta variante es suma cero por construcción: la suma de
-esperados sobre todas las categorías es el propio total del AGEB. Compara la
-**mezcla** del AGEB contra la mezcla de la entidad, no su nivel absoluto.
-
-**Por qué α:** un AGEB que espera 0.2 cafeterías y tiene 1 marcaría 5.0 sin
-suavizado. Con bases chicas α domina el resultado, a propósito.
-
-**Por qué no una mediana:** para la mayoría de las clases el AGEB mediano tiene
-cero establecimientos, así que una densidad mediana da cero y el índice divide
-entre cero.
-
-**Bases por entidad:** CDMX y Nuevo León se comparan cada una contra sí misma.
-El comercio al por menor es 45 % de los establecimientos en CDMX y 35 % en NL.
-
-**Regla de grano:** el índice de un sector se calcula con conteos a nivel
-sector, nunca agregando los índices de sus clases.
-
-### Bandas y confianza
-
-| banda | índice |
-|---|---|
-| muy_bajo | < 0.5 |
-| bajo | 0.5 a 0.8 |
-| normal | 0.8 a 1.25 |
-| alto | 1.25 a 2.0 |
-| muy_alto | >= 2.0 |
-
-Umbrales fijos sobre el índice, no percentiles: con percentiles siempre caería
-10 % de los AGEB en `muy_bajo`, hubiera brechas reales o no. El percentil se
-guarda aparte como contexto de ranking.
-
-Una categoría es `confiable` en una entidad si tiene al menos 30
-establecimientos ahí. De 2,035 combinaciones (categoría × entidad), 1,107 lo
-son. Las demás se pintan en gris, sin banda, y nunca ordenan primero.
-
----
-
 ## Arquitectura
 
-Medallion sobre Postgres 16. Cada capa tiene una regla que no se rompe.
+Arquitectura Medallion sobre Postgres 16. Cada capa tiene una regla que no se rompe.
 
 | Capa | Qué contiene | Regla |
 |---|---|---|
@@ -163,58 +104,7 @@ Reconstrucción completa: 1 min 42 s. Los cargadores de bronze son idempotentes
 por `source_file`, así que volver a correr todo nunca duplica ni borra datos ya
 cargados.
 
-### Los conteos incluyen los ceros
-
-`30_gold_conteo.sql` hace un cross join de AGEB elegibles contra las categorías
-presentes en su entidad, y un left join a los conteos reales. Sin esas filas en
-cero el ranking de sub-oferta perdería justo los lugares que se están buscando:
-un AGEB sin ninguna tienda de abarrotes simplemente no aparecería. Son 4.4
-millones de filas y el 91 % son ceros explícitos.
-
-### Del navegador a Postgres
-
-```
-  navegador
-     │  GET /explorar?entidades=19&nivel=clase&scian=461110&...
-     ▼
-  Next.js (App Router, server component)
-     │  parseFiltros(searchParams)  -> FiltrosExplorar
-     │  explorarPorScian(f)
-     ▼
-  web/lib/queries.ts           SQL directo con postgres.js, sin ORM
-     │  SELECT ... FROM gold.indice_suministro
-     │  WHERE nivel_scian, scian_id, entidad_id, poblacion
-     │  ORDER BY confiable DESC, indice ASC   LIMIT 25
-     ▼
-  Postgres  gold.indice_suministro  (índice por nivel_scian, scian_id, entidad_id, indice)
-     │  25 filas
-     ▼
-  HTML renderizado en el servidor
-```
-
-Notas del camino:
-
-- **Todo el estado vive en la URL:** entidades, nivel, categoría, demanda,
-  orden, página y población mínima son `searchParams`. No hay estado de filtros
-  en `useState`. Una URL copiada reproduce exactamente la misma vista.
-- **Las páginas son server components:** llaman a las funciones de query
-  directamente. El único componente cliente es el riel de filtros, que no tiene
-  datos propios y solo empuja URLs nuevas.
-- **La métrica nunca se calcula en request time:** índice, esperado, banda y
-  percentil ya están en gold. La página sí agrega esas filas ya calculadas en
-  SQL (mediana e histograma de bandas), pero no recalcula la métrica.
-- **Ningún número se calcula en React:** los componentes solo formatean a
-  `es-MX`. La única aritmética en un componente es el ancho de las barras del
-  histograma y el número de renglón.
-- **La app nunca toca `silver.establecimiento`:** lee siete tablas de gold más
-  `silver.ageb`, `silver.municipio` y `silver.entidad`. Ningún dato a nivel
-  establecimiento, y por lo tanto ningún teléfono ni correo, llega al navegador.
-
-Una consulta de `/explorar` tarda 33 ms.
-
----
-
-## Invariantes
+### Invariantes
 
 `90_checks.sql` corre al final de toda reconstrucción, incluso de una parcial
 por prefijo, y aborta si algo se rompe:
@@ -230,19 +120,59 @@ por prefijo, y aborta si algo se rompe:
 8/8 cordura: Polanco sobre-ofertado en restaurantes (indice 2.5932)
 ```
 
-El primero es el que importa: si la suma de esperados no iguala la suma de
-observados para cada nodo, el join de tasas está mal y todo lo demás es ruido.
+La primera es la que importa: si la suma de esperados no iguala la suma de
+observados para cada categoría, el join de tasas está mal y todo lo demás es
+ruido.
 
 No hay tests unitarios. Las invariantes están en SQL porque los errores de este
 proyecto son de datos, no de funciones puras.
+
+### Los conteos incluyen los ceros
+
+`30_gold_conteo.sql` hace un cross join de AGEB elegibles contra las categorías
+presentes en su entidad, y un left join a los conteos reales. Sin esas filas en
+cero el ranking de sub-oferta perdería justo los lugares que se están buscando:
+un AGEB sin ninguna tienda de abarrotes simplemente no aparecería. Son 4.4
+millones de filas y el 91 % son ceros explícitos.
+
+### Del navegador a Postgres
+
+No hay API intermedia ni fetch desde el cliente. La página es un server
+component: Next.js consulta Postgres en el servidor y hasta entonces arma el
+HTML, que es lo único que viaja al navegador.
+
+```
+  navegador                Next.js (servidor)              Postgres
+      │                           │                            │
+      │  1. pide una página       │                            │
+      │──────────────────────────>│                            │
+      │                           │  2. SELECT sobre gold      │
+      │                           │───────────────────────────>│
+      │                           │                            │
+      │                           │  3. 25 filas ya calculadas │
+      │                           │<───────────────────────────│
+      │                           │                            │
+      │  4. HTML ya renderizado   │  (arma el HTML con ellas)  │
+      │<──────────────────────────│                            │
+      │                           │                            │
+```
+
+La consulta del paso 2 es SQL directo con `postgres.js`, sin ORM, contra
+`gold.indice_suministro`. Tarda 33 ms.
 
 ---
 
 ## Calidad de datos
 
-Ningún registro se borra. Se marca en `silver.establecimiento.calidad_flags`.
+Cuando un registro de la fuente tiene un problema no se borra: se le pone una
+marca en `silver.establecimiento.calidad_flags` y sigue en la tabla. Las marcas
+son advertencias sobre el dato de origen, no hallazgos del producto ni errores
+del pipeline, y ninguna de las cuatro impide que el registro cuente en la
+métrica. Sirven para poder auditar después de dónde viene un número raro.
 
-| marca | volumen | qué significa |
+Estos son los volúmenes actuales:
+
+| marca | volumen | qué la dispara |
 |---|---|---|
 | `clee_inconsistente` | 13.6 % | la clave CLEE no concuerda con las columnas. 96.5 % de esos casos difieren solo en la clase SCIAN, es reclasificación posterior a la creación de la clave. Se confía en las columnas, no en la clave |
 | `posible_duplicado` | 3.4 % | mismo nombre normalizado a menos de 50 m. Se marca, nunca se fusiona |
@@ -258,8 +188,11 @@ León.
 
 1. **Sin ingresos, tráfico ni rentabilidad.** DENUE no los tiene.
 2. **Gravedad comercial.** La población residencial representa mal la demanda
-   donde la población diurna es muy distinta. Para eso existe la variante
-   comercial, con la advertencia de suma cero de arriba.
+   donde la población diurna es muy distinta (Santa Fe, Centro Histórico, San
+   Pedro). Para eso la app permite cambiar la base de comparación a la actividad
+   comercial de la zona en lugar de sus habitantes. Esa segunda lectura es suma
+   cero dentro de una zona: compara su mezcla de giros contra la mezcla del
+   estado, no su nivel absoluto.
 3. **Sustitución entre clases.** SCIAN separa sustitutos cercanos en clases
    distintas. El AGEB `1903900015157` tiene cero tiendas de abarrotes (461110,
    índice 0.03) y cuatro minisúper (462112, índice 1.08). La demanda está
@@ -271,18 +204,6 @@ León.
 6. **Solo AGEB urbanas y con al menos 500 habitantes.** Quedan fuera 836 AGEB,
    que son el 2 % de la población de Nuevo León y el 0.2 % de la de CDMX. De los
    674,081 establecimientos, 624,369 (92.6 %) entran al cálculo.
-
----
-
-## Lo que no está construido
-
-- **Afinidad entre categorías** (`gold.afinidad_pares`, lift por co-presencia)
-  quedó especificada y sin construir.
-- **Tests unitarios**, por la razón de arriba.
-- **PostGIS.** DENUE ya trae la clave de AGEB, así que la métrica son `GROUP BY`
-  y no hace falta geometría. Se necesitaría para vecindad o isócronas.
-- **Más entidades.** El pipeline no tiene nada específico de 09 y 19 salvo los
-  bounding boxes de `silver.entidad_bbox` y la lista de archivos a descargar.
 
 ---
 
