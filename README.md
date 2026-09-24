@@ -36,7 +36,7 @@ millones de negocios y establecimientos activos en México.
 
 - Para consumir estos datos se usa la descarga masiva en lugar de llamar a la API
   (ya que esta no regresa la clave AGEB).
-- Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb_key: 1903900014233...}`
+- Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb: 004A...}`
 
 **SCIAN** (Sistema de Clasificación Industrial de América del Norte): el catálogo
 oficial utilizado en México para clasificar las actividades económicas de los
