@@ -1,7 +1,7 @@
 # denue-supply-gap
 
-¿Dónde en NL y CDMX cada categoría de negocio está poco o sobre explotada
-relativa a la comparación dentro de su estado?
+¿En qué zonas de NL y CDMX sobran o faltan negocios de cada giro,
+comparado con lo normal en su estado?
 
 ---
 
@@ -36,7 +36,7 @@ millones de negocios y establecimientos activos en México.
 
 - Para consumir estos datos se usa la descarga masiva en lugar de llamar a la API
   (ya que esta no regresa la clave AGEB).
-- Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb: 004A...}`
+- Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb: 4233...}`
 
 **SCIAN** (Sistema de Clasificación Industrial de América del Norte): el catálogo
 oficial utilizado en México para clasificar las actividades económicas de los
