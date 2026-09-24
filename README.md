@@ -51,9 +51,8 @@ subrama    46111   Comercio al por menor en tiendas de abarrotes, ultramarinos y
 clase      461110  Comercio al por menor en tiendas de abarrotes, ultramarinos y misceláneas
 ```
 
-La UI expone tres: sector, subsector y clase. `rama` y `subrama` existen en
-nuestra categoría de datos silver para que la jerarquía cierre, pero no se
-utilizan.
+La UI expone tres: `sector`, `subsector` y `clase`. `rama` y `subrama` existen en
+nuestros datos pero no se consultan.
 
 **AGEB** (Área Geoestadística Básica): unidad territorial usada por el INEGI para
 organizar y presentar información estadística de los censos en el país. En este
