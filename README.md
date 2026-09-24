@@ -30,8 +30,6 @@ ingresos, tráfico ni rentabilidad, y el producto nunca los afirma.
 
 ## Glosario
 
-Tres términos de INEGI que el resto del repo da por entendidos.
-
 **DENUE** (Directorio Estadístico Nacional de Unidades Económicas): es una base
 de datos oficial creada por el INEGI que contiene información detallada sobre
 millones de negocios y establecimientos activos en México.
