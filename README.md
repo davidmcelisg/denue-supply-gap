@@ -1,7 +1,7 @@
 # denue-supply-gap
 
-¿Dónde en NL y CDMX cada categoría de negocio está poco o muy suministrada
-relativo a la comparación dentro de su estado?
+¿Dónde en NL y CDMX cada categoría de negocio está poco o sobre explotada
+relativa a la comparación dentro de su estado?
 
 ---
 
