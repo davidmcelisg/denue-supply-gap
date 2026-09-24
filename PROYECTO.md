@@ -24,14 +24,20 @@ polish.
 ### 0.2 Hard constraints
 
 - **No LLM anywhere in the product.** Natural-language querying is out of scope.
-- **No arithmetic in React.** Every rendered number comes from a gold table or a
-  query that reads gold. Components may only format (`toLocaleString('es-MX')`,
-  decimals, label/color lookup). No dividing, summing, or percentages in
-  components.
+- **No metric arithmetic in React.** Every rendered number comes from a gold
+  table or a query that reads gold. Components may only format
+  (`toLocaleString('es-MX')`, decimals, label/color lookup). The only arithmetic
+  allowed in a component is page bookkeeping that is not a metric: row
+  positions in `/explorar`, and the bar width in `ResumenBandas` (the counts
+  next to the bars are SQL values).
 - **Never edit bronze.** If a cleaning rule is wrong, rebuild silver from bronze.
 - **Never delete rows in silver for quality reasons.** Flag them. Gold decides
   what to filter.
-- **No analysis at request time.** The UI reads precomputed gold tables.
+- **The metric is never computed at request time.** The index, esperado, banda
+  and percentil for every (AGEB × node) are precomputed in
+  `gold.indice_suministro`. Pages may aggregate those precomputed rows in SQL
+  (`/explorar` runs a `count`, a `percentile_cont` and a `GROUP BY` for the
+  summary), but never recompute the metric itself.
 
 ### 0.3 Timebox
 
@@ -118,8 +124,9 @@ too noisy: rows render greyed and never rank first.
 2. **Commercial gravity.** Population misrepresents demand where daytime and
    residential population diverge (Centro Histórico, Santa Fe, San Pedro).
    `indice_comercial` exists for this reason.
-3. **Vintage mismatch.** DENUE is based on Censos Económicos 2024; population
-   from Censo 2020. Render as a footnote sourced from query `contexto`.
+3. **Vintage mismatch.** DENUE edición 2026-05 (`max(fecha_alta)` = 2026-04)
+   against population from Censo 2020. Render as a footnote sourced from query
+   `contexto`; the edition string lives in `gold.config`, never hardcoded.
 4. **Estrato is a range bucket**, not a headcount. Never show point estimates of
    employment.
 5. **Urban AGEBs only** for population (see T1.2); establishments in rural areas
@@ -138,8 +145,10 @@ too noisy: rows render greyed and never rank first.
 
 ```
 denue-supply-gap/
+├── README.md             # what it is, how it works, how to run it
 ├── CLAUDE.md
 ├── PROYECTO.md
+├── DEMO.md               # end-to-end run + demo path
 ├── docker-compose.yml
 ├── .env.local            # gitignored: INEGI_TOKEN, DATABASE_URL
 ├── etl/
@@ -375,7 +384,7 @@ Indexes: `(nivel_scian, scian_id, entidad_id, indice_pob)`,
 | Roma Norte, CDMX | `0901500011017` | 4,538 | 669 | 8.6 | 0.45 | 0.50 |
 | Polanco, CDMX | `0901600010158` | 4,030 | 1,070 | 2.59 pob / 0.58 com | — | — |
 
-**T3.4 — Affinity (OPTIONAL — cut if time is short)** ⏭ DEFERRED — revisit after Phase 5 if time allows
+**T3.4 — Affinity (OPTIONAL, cut if time is short)** ⏭ NOT BUILT
 ```
 gold.afinidad_pares
   entidad_id, clase_a, clase_b, n_co, lift
@@ -434,7 +443,7 @@ type RespuestaExplorar = {
   contexto: {
     scianNombre: string;
     nTotalPorEntidad: Record<string, number>;
-    edicionDenue: string;     // '2024'
+    edicionDenue: string;     // '2026-05', from gold.config
     anioCenso: number;        // 2020
     alpha: number;
   };
@@ -480,7 +489,10 @@ Page size: 25. Offset pagination (bounded sets, indexed sort column).
 - `/ageb/[ageb_key]` — area-first: "what's missing here?" Fix an AGEB, rank
   SCIAN nodes.
 - `/metodologia` — the metric, α, bandas, confidence rule, and every limitation
-  in §1.5. This page matters for the demo.
+  in §1.5. This page matters for the demo. `/` and `/metodologia` are
+  `force-dynamic`: both read `gold.config` and `gold.resumen_calidad`, and a
+  prerendered copy would keep showing figures from the last web build after an
+  ETL rebuild.
 - `/afinidad` — only if T3.4 was built.
 
 **URL state** — everything that changes what's on screen lives in `searchParams`:
@@ -500,6 +512,10 @@ Changing any filter or `orden` resets `pagina` to 1.
 
 **UI rules**
 - `confiable === false` → greyed row with tooltip; never ranked first.
+- `/ageb` ranks every node of the entidad (~900 clases, most of them zero). It
+  renders the first `DETALLE_SIZE` (50) with a `?todas=1` escape hatch. Without
+  the limit the page is 2.3 MB of mostly-zero rows and the readable answer is
+  below the fold.
 - Show `n_estab` and `esperado` next to the index so every number is
   explainable ("2 vs. 7.4 esperados").
 - Empty states distinguish "no AGEB matches these filters" from "this category

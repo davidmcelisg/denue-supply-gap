@@ -6,19 +6,22 @@ import { NotaVigencia } from '@/components/NotaVigencia';
 import { DEMANDA_LABEL, NIVEL_LABEL, fmtDec, fmtInt, fmtPct } from '@/lib/format';
 import { hrefExplorar, parseDemanda, parseNivel } from '@/lib/params';
 import { detallarAgeb, obtenerAgeb, obtenerContexto } from '@/lib/queries';
-import { DEMANDAS, NIVELES } from '@/lib/types';
+import { DEMANDAS, DETALLE_SIZE, NIVELES } from '@/lib/types';
 
 export default async function AgebPage({ params, searchParams }: PageProps<'/ageb/[ageb_key]'>) {
   const { ageb_key } = await params;
   const sp = await searchParams;
   const demanda = parseDemanda(sp.demanda);
   const nivel = parseNivel(sp.nivel);
+  const todas = (Array.isArray(sp.todas) ? sp.todas[0] : sp.todas) === '1';
 
   const ageb = await obtenerAgeb(ageb_key);
   if (!ageb) notFound();
-  const [filas, ctx] = await Promise.all([detallarAgeb(ageb_key, demanda, nivel), obtenerContexto()]);
+  const [detalle, ctx] = await Promise.all([detallarAgeb(ageb_key, demanda, nivel, todas), obtenerContexto()]);
+  const { filas, total } = detalle;
 
-  const href = (d: typeof demanda, n: typeof nivel) => `/ageb/${ageb_key}?demanda=${d}&nivel=${n}`;
+  const href = (d: typeof demanda, n: typeof nivel) =>
+    `/ageb/${ageb_key}?demanda=${d}&nivel=${n}${todas ? '&todas=1' : ''}`;
   const chip = (active: boolean) =>
     `rounded border px-2 py-0.5 text-xs ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-600 hover:border-stone-500'}`;
 
@@ -87,6 +90,20 @@ export default async function AgebPage({ params, searchParams }: PageProps<'/age
           </table>
           <p className="mt-3 text-xs text-stone-500">
             Ordenado de más faltante a más saturado. Índice = (tiene + α) / (esperados + α); el percentil es la posición de este AGEB entre todos los de su entidad para esa categoría.
+          </p>
+          <p className="mt-1 text-xs text-stone-500">
+            {todas ? (
+              <>
+                Mostrando las {fmtInt(total)} categorías evaluadas.{' '}
+                <Link href={`/ageb/${ageb_key}?demanda=${demanda}&nivel=${nivel}`} className="underline">Ver solo las primeras {fmtInt(DETALLE_SIZE)}</Link>
+              </>
+            ) : (
+              <>
+                Mostrando las {fmtInt(DETALLE_SIZE)} categorías con menor índice de {fmtInt(total)} evaluadas. La cola son categorías sin
+                presencia en este AGEB y con muy pocos esperados.{' '}
+                <Link href={`/ageb/${ageb_key}?demanda=${demanda}&nivel=${nivel}&todas=1`} className="underline">Ver todas</Link>
+              </>
+            )}
           </p>
         </div>
       )}

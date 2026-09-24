@@ -27,4 +27,5 @@ If this file and PROYECTO.md ever disagree, PROYECTO.md wins.
 ## Commands
 - `docker compose up -d` — start Postgres
 - run-sql script — rebuild all transforms, or a single prefix (e.g. `30_`).
-  `90_checks.sql` runs last and aborts on any broken invariant.
+  `90_checks.sql` always runs last, including on a prefix run, and aborts on
+  any broken invariant. It reports each check through `RAISE NOTICE`.

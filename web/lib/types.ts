@@ -13,6 +13,10 @@ export const ORDENES: readonly OrdenExplorar[] = ['indice_asc', 'indice_desc', '
 export const ENTIDADES: readonly string[] = ['09', '19'];
 
 export const PAGE_SIZE = 25;
+// /ageb ranks every SCIAN node of its entidad (927 clases for an AGEB in CDMX),
+// most of them zero. The page shows the head of that ranking unless asked for
+// all of it.
+export const DETALLE_SIZE = 50;
 
 export type FiltrosExplorar = {
   entidades: string[];        // ['09','19']
@@ -65,6 +69,11 @@ export type FilaScian = {
   percentil: number;
   banda: Banda;
   confiable: boolean;
+};
+
+export type RespuestaAgeb = {
+  filas: FilaScian[];
+  total: number;              // categorías evaluadas, no filas devueltas
 };
 
 export type ResultadoBusqueda = {

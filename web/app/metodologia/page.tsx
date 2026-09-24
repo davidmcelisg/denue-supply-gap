@@ -2,6 +2,11 @@ import { obtenerContexto, obtenerResumenCalidad } from '@/lib/queries';
 import { BandaBadge } from '@/components/Banda';
 import { fmtInt, fmtPct } from '@/lib/format';
 
+// Every figure on this page is a SQL value from gold.resumen_calidad. Reading
+// it at request time is the point: a prerendered copy would keep showing the
+// percentages from the last web build after an ETL rebuild.
+export const dynamic = 'force-dynamic';
+
 export default async function Metodologia() {
   const [ctx, r] = await Promise.all([obtenerContexto(), obtenerResumenCalidad()]);
   return (

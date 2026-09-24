@@ -36,7 +36,7 @@ docker compose ps
 ## 2. Download raw data (once, ~90 MB)
 
 All three sources are public INEGI files. They land in `etl/data/raw/`
-(gitignored).
+(gitignored). About 86 MB of zips, 550 MB unpacked.
 
 ```bash
 mkdir -p etl/data/raw/denue etl/data/raw/censo etl/data/raw/scian
@@ -60,11 +60,15 @@ SCIAN 2023 official structure:
 curl -sL -A "Mozilla/5.0" -o etl/data/raw/scian/estructura2023.xlsx https://www.inegi.org.mx/contenidos/app/scian/estructura2023.xlsx
 ```
 
-Optional — inspect encodings, columns and null counts before loading:
+Optional, inspect encodings, columns and null counts before loading:
 
 ```bash
 npm run inspect
 ```
+
+616 lines, and it prints raw DENUE rows, which include the phone numbers and
+personal email addresses of small-business owners. Public INEGI data, but not
+something to project on a screen. Do not run it during a demo.
 
 ## 3. Load bronze (once per download)
 
@@ -103,10 +107,17 @@ Polanco sanity) and fails the run if any breaks.
 npm run sql
 ```
 
-Rebuild only gold after a change to a `30_`+ file:
+Rebuild only gold after a change to a `30_`+ file. A prefix run appends
+`90_checks.sql` too, so a partial rebuild still has to pass the invariants:
 
 ```bash
 npm run sql -- 3
+```
+
+Run the invariants alone, which prints all eight:
+
+```bash
+npm run sql -- 90_
 ```
 
 ## 5. Sanity checks before the demo (PROYECTO.md §5)
@@ -121,6 +132,12 @@ docker compose exec -T db psql -U denue -d denue -c "select count(*) nodos, coun
 Expected: `fallos = 0`; join rate 99.75 % (09) and 98.71 % (19); Polanco
 restaurants ≈ 2.59 pob / 0.58 com, Cumbres abarrotes ≈ 0.09, San Pedro
 restaurants ≈ 38.4.
+
+The same invariants, readable, in one command:
+
+```bash
+npm run sql -- 90_
+```
 
 Query-layer check (runs the three functions and a hand computation):
 
@@ -158,19 +175,24 @@ npm --prefix web run dev
 1. `/` — read the one-paragraph method, click **Tiendas de abarrotes en Nuevo León**.
 2. `/explorar` — point at "tiene 0, esperados 23.9 → índice 0.04"; show the
    banda histogram; tick **Ciudad de México** (URL changes, page resets to 1).
-3. Click an AGEB key → `/ageb/…` — "what's missing here", abarrotes on top.
+3. Click an AGEB key → `/ageb/…`, "what's missing here", abarrotes on top.
    Switch **Demanda según → Actividad comercial** to show the lens change.
 4. Browser back → same filtered list. Copy the URL, open in a new tab → same view.
-5. `/ageb/0901600010158?demanda=comercial&nivel=clase` — Polanco: 2.6× restaurants
-   by population, 0.58 by commercial mass. Explain why.
+5. `/ageb/0901600010158?demanda=comercial&nivel=sector` — Polanco at sector
+   grain: 20 rows, retail is 698 of its 1,070 establishments. Use **sector**,
+   not clase: at clase grain the head of the ranking is long-tail categories
+   with zero establishments and it reads badly.
 6. `/metodologia` — α, bandas, confidence rule, the five limitations.
 
 Curated URLs (also linked from `/`):
 
 - `/explorar?entidades=19&nivel=clase&scian=461110&demanda=poblacion&orden=indice_asc&pagina=1&minPob=500`
 - `/explorar?entidades=09&nivel=clase&scian=722515&demanda=poblacion&orden=indice_asc&pagina=1&minPob=500`
-- `/ageb/0901600010158?demanda=comercial&nivel=clase`
+- `/ageb/0901600010158?demanda=comercial&nivel=sector`
 - `/ageb/1903900014233?demanda=poblacion&nivel=clase`
+
+`/ageb` shows the 50 categories with the lowest index out of the ~900 evaluated
+for that AGEB; `&todas=1` renders the full ranking (2.3 MB, mostly zeros).
 
 ## 8. Tear down
 

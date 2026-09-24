@@ -53,7 +53,11 @@ INSERT INTO gold.scian_sinonimo (nivel_scian, scian_id, sinonimo) VALUES
   ('clase', '461211', 'licores'),
   ('clase', '461110', 'tiendita'),
   ('clase', '461110', 'miscelánea'),
-  ('clase', '461110', 'minisúper');
+  -- 'minisúper' belongs to 462112, not to the corner store: seeding it on
+  -- 461110 ranked the wrong clase above the one actually named that way.
+  ('clase', '462112', 'minisúper'),
+  ('clase', '462112', 'minisuper'),
+  ('clase', '462112', 'autoservicio');
 
 DO $$
 DECLARE

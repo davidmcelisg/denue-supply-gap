@@ -19,6 +19,8 @@ BEGIN
   IF v_fallos > 0 THEN
     RAISE EXCEPTION 'CHECK 1 FAILED: sum(esperado) <> sum(n_estab) for % nodes', v_fallos;
   END IF;
+  RAISE NOTICE '1/8 identidad de tasas: sum(esperado) = sum(n_estab) en los % nodos',
+    (SELECT count(*) FROM gold.tasa_scian);
 
   -- 2. Zero rows present: every eligible AGEB has a row for every node in its entidad
   SELECT count(*) INTO v_fallos FROM (
@@ -30,6 +32,8 @@ BEGIN
   IF v_fallos > 0 THEN
     RAISE EXCEPTION 'CHECK 2 FAILED: eligible AGEBs missing from gold.conteo_ageb_scian';
   END IF;
+  RAISE NOTICE '2/8 filas en cero presentes: los % AGEB elegibles tienen fila en cada nodo',
+    (SELECT count(*) FROM silver.ageb WHERE es_elegible);
 
   -- 3. Counts reconcile with silver at every grain
   SELECT count(*) INTO v_fallos FROM (
@@ -42,6 +46,8 @@ BEGIN
   IF v_fallos > 0 THEN
     RAISE EXCEPTION 'CHECK 3 FAILED: gold counts do not reconcile with eligible silver establishments';
   END IF;
+  RAISE NOTICE '3/8 conteos cuadran con silver en los tres granos: % establecimientos elegibles',
+    (SELECT count(*) FROM silver.establecimiento e JOIN silver.ageb a USING (ageb_key) WHERE a.es_elegible);
 
   -- 4. Join rate per entidad >= 90 % (T2.3 target)
   SELECT min(rate) INTO v_join_min FROM (
@@ -51,6 +57,7 @@ BEGIN
   IF v_join_min < 90 THEN
     RAISE EXCEPTION 'CHECK 4 FAILED: DENUE -> AGEB join rate % < 90%%', round(v_join_min, 2);
   END IF;
+  RAISE NOTICE '4/8 join DENUE -> AGEB: peor entidad % %%', round(v_join_min, 2);
 
   -- 5. Silver row count within 1 % of bronze; nothing deleted for quality
   SELECT count(*) INTO v_silver FROM silver.establecimiento;
@@ -58,6 +65,7 @@ BEGIN
   IF v_bronze = 0 OR abs(v_silver - v_bronze) > 0.01 * v_bronze THEN
     RAISE EXCEPTION 'CHECK 5 FAILED: silver.establecimiento % rows vs bronze %', v_silver, v_bronze;
   END IF;
+  RAISE NOTICE '5/8 nada se borro por calidad: bronze % -> silver %', v_bronze, v_silver;
 
   -- 6. One rate row per node present in counts
   SELECT count(*) INTO v_fallos FROM (
@@ -67,6 +75,7 @@ BEGIN
   IF v_fallos > 0 THEN
     RAISE EXCEPTION 'CHECK 6 FAILED: % nodes without a rate row', v_fallos;
   END IF;
+  RAISE NOTICE '6/8 cada nodo de conteo tiene su fila de tasa';
 
   -- 7. Curated findings on / still resolve (PROYECTO.md §5)
   SELECT count(*) INTO v_fallos FROM (VALUES
@@ -79,11 +88,14 @@ BEGIN
   IF v_fallos > 0 THEN
     RAISE EXCEPTION 'CHECK 7 FAILED: % curated AGEB x clase pairs missing from gold', v_fallos;
   END IF;
+  RAISE NOTICE '7/8 los 5 AGEB x clase curados siguen resolviendo';
 
   -- 8. Polanco reads oversupplied in restaurants by population (§5 sanity)
   IF (SELECT indice_pob FROM gold.indice_suministro WHERE ageb_key = '0901600010158' AND scian_id = '722511') < 1.25 THEN
-    RAISE EXCEPTION 'CHECK 8 FAILED: Polanco restaurants indice_pob < 1.25 — something is wrong';
+    RAISE EXCEPTION 'CHECK 8 FAILED: Polanco restaurants indice_pob < 1.25, something is wrong';
   END IF;
+  RAISE NOTICE '8/8 cordura: Polanco sobre-ofertado en restaurantes (indice %)',
+    (SELECT indice_pob FROM gold.indice_suministro WHERE ageb_key = '0901600010158' AND scian_id = '722511');
 
-  RAISE NOTICE 'all 8 checks passed';
+  RAISE NOTICE 'las 8 invariantes pasaron';
 END $$;

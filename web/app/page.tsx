@@ -2,22 +2,26 @@ import Link from 'next/link';
 import { hrefExplorar } from '@/lib/params';
 import { obtenerContexto } from '@/lib/queries';
 
+// Read gold at request time. Prerendering would freeze `contexto` (and the
+// figures on /metodologia) at build time, so an ETL rebuild would not show.
+export const dynamic = 'force-dynamic';
+
 // Curated findings: AGEBs and categories validated by hand in Phase 3
 // (PROYECTO.md T3.3 spot-check). Each link is a fully prefilled URL.
 const HALLAZGOS = [
   {
     titulo: 'Tiendas de abarrotes en Nuevo León',
-    texto: 'Las colonias residenciales de alto ingreso (Cumbres, Contry, Del Valle) tienen una décima parte de las tiendas de la esquina que tendría un AGEB típico de su tamaño. Es un patrón de urbanismo, no de demanda insatisfecha necesariamente — el índice lo muestra, la interpretación es tuya.',
+    texto: 'Los 25 AGEB con el índice más bajo tienen cero tiendas de abarrotes y entre 15 y 24 esperadas. Están en Monterrey (13), San Pedro Garza García (5) y General Escobedo (3). Es un patrón de urbanismo, no necesariamente demanda insatisfecha: el índice lo muestra, la interpretación es tuya.',
     href: hrefExplorar({ entidades: ['19'], nivel: 'clase', scianId: '461110', orden: 'indice_asc' }),
   },
   {
     titulo: 'Cafeterías en Ciudad de México',
-    texto: 'Los AGEB más sub-ofertados son tractos grandes de Iztapalapa, Gustavo A. Madero y Xochimilco: 11 a 14 cafeterías esperadas, cero registradas. En el otro extremo, Roma Norte tiene 8 veces la tasa típica.',
+    texto: 'Los AGEB más sub-ofertados son tractos grandes de Iztapalapa, Gustavo A. Madero y Xochimilco: 11 a 14 cafeterías esperadas, cero registradas. En el otro extremo, el AGEB de Roma Norte tiene 28 contra 4.6 esperadas, 5.2 veces la tasa típica.',
     href: hrefExplorar({ entidades: ['09'], nivel: 'clase', scianId: '722515', orden: 'indice_asc' }),
   },
   {
     titulo: 'Polanco: población vs. actividad comercial',
-    texto: 'Por habitantes, Polanco tiene 2.6× los restaurantes típicos. Pero relativo a su propia masa comercial (1,070 establecimientos para 4,030 residentes) los restaurantes son una fracción menor que en un AGEB típico. Cambiar la base de demanda cambia la lectura — y eso es intencional.',
+    texto: 'Por habitantes, Polanco tiene 2.6× los restaurantes típicos. Pero relativo a su propia masa comercial (1,070 establecimientos para 4,030 residentes) los restaurantes son una fracción menor que en un AGEB típico. Cambiar la base de demanda cambia la lectura, y eso es intencional.',
     href: '/ageb/0901600010158?demanda=comercial&nivel=clase',
   },
 ];
@@ -32,7 +36,7 @@ export default async function Home() {
         establecimientos hay contra cuántos <em>habría</em> si ese AGEB tuviera la tasa típica de su entidad
         (establecimientos por habitante, o por establecimiento total). El cociente es el índice: menor a 1 es
         sub-oferta, mayor a 1 es sobre-oferta. Fuente: DENUE {ctx.edicionDenue} y Censo {ctx.anioCenso}.
-        Es oferta relativa — DENUE no tiene ingresos, tráfico ni rentabilidad.
+        Es oferta relativa: DENUE no tiene ingresos, tráfico ni rentabilidad.
       </p>
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">

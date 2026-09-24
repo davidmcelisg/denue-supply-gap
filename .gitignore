@@ -15,3 +15,6 @@ web/out/
 
 # os
 .DS_Store
+
+# demo notes, not versioned
+GUION.md

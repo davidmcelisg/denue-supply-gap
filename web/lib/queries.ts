@@ -3,10 +3,10 @@
 // are resolved per `demanda` here, never in React.
 import { sql } from './db';
 import {
-  BANDAS, PAGE_SIZE,
+  BANDAS, DETALLE_SIZE, PAGE_SIZE,
   type Banda, type Demanda, type DetalleAgeb, type FilaAgeb, type FilaScian,
-  type FiltrosExplorar, type NivelScian, type ResumenCalidad, type RespuestaExplorar,
-  type ResultadoBusqueda,
+  type FiltrosExplorar, type NivelScian, type RespuestaAgeb, type ResumenCalidad,
+  type RespuestaExplorar, type ResultadoBusqueda,
 } from './types';
 
 // Column names for the chosen demand proxy. Only these two shapes exist, so
@@ -83,16 +83,28 @@ export async function explorarPorScian(f: FiltrosExplorar): Promise<RespuestaExp
   };
 }
 
-export async function detallarAgeb(agebKey: string, demanda: Demanda, nivel: NivelScian): Promise<FilaScian[]> {
+// `todas` renders the full ranking; the default is the head of it. At clase
+// grain the full list is ~930 rows for one AGEB, nearly all of them zero, so
+// the head is what answers "what is missing here".
+export async function detallarAgeb(
+  agebKey: string, demanda: Demanda, nivel: NivelScian, todas = false,
+): Promise<RespuestaAgeb> {
   const col = columnas(demanda);
-  return sql<FilaScian[]>`
-    SELECT i.scian_id AS "scianId", n.nombre AS "scianNombre", i.nivel_scian AS nivel,
-           i.n_estab AS "nEstab", ${col.esperado} AS esperado, ${col.indice} AS indice,
-           ${col.percentil} AS percentil, ${col.banda} AS banda, i.confiable
-    FROM gold.indice_suministro i
-    JOIN gold.scian_nodo n ON n.nivel_scian = i.nivel_scian AND n.scian_id = i.scian_id
-    WHERE i.ageb_key = ${agebKey} AND i.nivel_scian = ${nivel}
-    ORDER BY i.confiable DESC, ${col.indice} ASC, i.scian_id`;
+  const [filas, totales] = await Promise.all([
+    sql<FilaScian[]>`
+      SELECT i.scian_id AS "scianId", n.nombre AS "scianNombre", i.nivel_scian AS nivel,
+             i.n_estab AS "nEstab", ${col.esperado} AS esperado, ${col.indice} AS indice,
+             ${col.percentil} AS percentil, ${col.banda} AS banda, i.confiable
+      FROM gold.indice_suministro i
+      JOIN gold.scian_nodo n ON n.nivel_scian = i.nivel_scian AND n.scian_id = i.scian_id
+      WHERE i.ageb_key = ${agebKey} AND i.nivel_scian = ${nivel}
+      ORDER BY i.confiable DESC, ${col.indice} ASC, i.scian_id
+      ${todas ? sql`` : sql`LIMIT ${DETALLE_SIZE}`}`,
+    sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM gold.indice_suministro
+      WHERE ageb_key = ${agebKey} AND nivel_scian = ${nivel}`,
+  ]);
+  return { filas, total: totales[0].n };
 }
 
 export async function obtenerAgeb(agebKey: string): Promise<DetalleAgeb | null> {

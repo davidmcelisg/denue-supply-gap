@@ -28,7 +28,9 @@ const rc = await explorarPorScian({ entidades: ['19'], nivel: 'sector', scianId:
 console.log('\nexplorarPorScian (comercial, sector 72, NL, page 2, minPob 2000): total', rc.total, '| fila[0]:', rc.filas[0]?.agebKey, rc.filas[0]?.indice, rc.filas[0]?.banda);
 
 const d = await detallarAgeb('1903900014233', 'poblacion', 'clase');
-console.log('\ndetallarAgeb (Cumbres, clase):', d.length, 'rows | first 3:', d.slice(0, 3).map((x) => `${x.scianId} ${x.scianNombre.slice(0, 30)} n=${x.nEstab} esp=${x.esperado} idx=${x.indice} ${x.banda} conf=${x.confiable}`));
+console.log(`\ndetallarAgeb (Cumbres, clase): ${d.filas.length} filas de ${d.total} categorías | first 3:`, d.filas.slice(0, 3).map((x) => `${x.scianId} ${x.scianNombre.slice(0, 30)} n=${x.nEstab} esp=${x.esperado} idx=${x.indice} ${x.banda} conf=${x.confiable}`));
+const dTodas = await detallarAgeb('1903900014233', 'poblacion', 'clase', true);
+console.log('  todas=true devuelve el total completo:', dTodas.filas.length === dTodas.total, `(${dTodas.filas.length})`);
 console.log('  obtenerAgeb:', await obtenerAgeb('1903900014233'));
 
 console.log('\nbuscarScian("cafeter"):', await buscarScian('cafeter'));

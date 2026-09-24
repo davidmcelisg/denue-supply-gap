@@ -21,7 +21,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <main className="mx-auto w-full max-w-6xl px-4 py-6 flex-1">{children}</main>
         <footer className="border-t border-stone-200 text-xs text-stone-500">
           <div className="mx-auto max-w-6xl px-4 py-3">
-            Fuente: INEGI — DENUE y Censo de Población y Vivienda 2020. Oferta relativa, no desempeño de negocios.
+            Fuente: INEGI, DENUE y Censo de Población y Vivienda 2020. Oferta relativa, no desempeño de negocios.
           </div>
         </footer>
       </body>
