@@ -107,6 +107,56 @@ export async function detallarAgeb(
   return { filas, total: totales[0].n };
 }
 
+// Cambiar de nivel conserva la categoría: SCIAN es una jerarquía estricta, así
+// que 461110 (clase) sube a 461 (subsector) y a 46 (sector). Bajando no hay una
+// sola respuesta, así que se toma el hijo con más establecimientos en las
+// entidades seleccionadas, que es el representante útil del nodo.
+// Devuelve null si la categoría no existe en el catálogo.
+export async function resolverNivel(
+  nivel: NivelScian, scianId: string, entidades: string[],
+): Promise<string | null> {
+  const rows = await sql<{ scian_id: string }[]>`
+    WITH actual AS (
+      -- el código identifica el nodo sin ambigüedad: los niveles tienen largos distintos
+      SELECT nivel_scian, scian_id, padre_id FROM gold.scian_nodo WHERE scian_id = ${scianId}
+    ),
+    linaje AS (
+      SELECT
+        CASE a.nivel_scian
+          WHEN 'sector'    THEN a.scian_id
+          WHEN 'subsector' THEN a.padre_id
+          ELSE (SELECT p.padre_id FROM gold.scian_nodo p
+                 WHERE p.nivel_scian = 'subsector' AND p.scian_id = a.padre_id)
+        END AS sector_id,
+        CASE a.nivel_scian
+          WHEN 'sector'    THEN NULL
+          WHEN 'subsector' THEN a.scian_id
+          ELSE a.padre_id
+        END AS subsector_id
+      FROM actual a
+    )
+    SELECT n.scian_id
+    FROM gold.scian_nodo n
+    CROSS JOIN linaje l
+    LEFT JOIN gold.tasa_scian t
+      ON t.nivel_scian = n.nivel_scian AND t.scian_id = n.scian_id
+     AND t.entidad_id = ANY(${entidades})
+    WHERE n.nivel_scian = ${nivel}
+      AND CASE ${nivel}
+        WHEN 'sector'    THEN n.scian_id = l.sector_id
+        WHEN 'subsector' THEN n.scian_id = l.subsector_id OR (l.subsector_id IS NULL AND n.padre_id = l.sector_id)
+        ELSE n.padre_id = l.subsector_id
+          OR (l.subsector_id IS NULL AND n.padre_id IN (
+                SELECT scian_id FROM gold.scian_nodo
+                WHERE nivel_scian = 'subsector' AND padre_id = l.sector_id))
+      END
+    GROUP BY n.scian_id
+    -- si la categoría ya existe en el nivel pedido, se queda tal cual
+    ORDER BY (n.scian_id = ${scianId}) DESC, sum(coalesce(t.n_total, 0)) DESC, n.scian_id
+    LIMIT 1`;
+  return rows[0]?.scian_id ?? null;
+}
+
 export async function obtenerAgeb(agebKey: string): Promise<DetalleAgeb | null> {
   const rows = await sql<DetalleAgeb[]>`
     SELECT a.ageb_key AS "agebKey", m.nombre AS "municipioNombre", a.entidad_id AS "entidadId",

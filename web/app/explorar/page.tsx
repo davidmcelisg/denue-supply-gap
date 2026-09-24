@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { FiltrosRail } from '@/components/FiltrosRail';
 import { NotaVigencia } from '@/components/NotaVigencia';
@@ -5,12 +6,21 @@ import { Paginacion } from '@/components/Paginacion';
 import { ResumenBandas } from '@/components/ResumenBandas';
 import { TablaAgebs } from '@/components/TablaAgebs';
 import { fmtDec, fmtInt, ENTIDAD_LABEL, NIVEL_LABEL, DEMANDA_LABEL } from '@/lib/format';
-import { parseFiltros } from '@/lib/params';
-import { explorarPorScian } from '@/lib/queries';
+import { hrefExplorar, parseFiltros } from '@/lib/params';
+import { explorarPorScian, resolverNivel } from '@/lib/queries';
 import { PAGE_SIZE } from '@/lib/types';
 
 export default async function ExplorarPage({ searchParams }: PageProps<'/explorar'>) {
   const f = parseFiltros(await searchParams);
+
+  // Cambiar de nivel conserva la categoría subiendo o bajando por la jerarquía
+  // SCIAN. Se redirige para que la URL quede canónica: lo que se ve y lo que
+  // dice la barra de direcciones nunca difieren.
+  const scianResuelto = await resolverNivel(f.nivel, f.scianId, f.entidades);
+  if (scianResuelto && scianResuelto !== f.scianId) {
+    redirect(hrefExplorar({ ...f, scianId: scianResuelto }));
+  }
+
   const r = await explorarPorScian(f);
 
   // Page bookkeeping only (positions, not metrics).

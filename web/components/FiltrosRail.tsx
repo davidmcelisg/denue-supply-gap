@@ -36,7 +36,7 @@ export function FiltrosRail({ scianNombre }: { scianNombre: string }) {
         <select value={f.nivel} onChange={(e) => push({ nivel: e.target.value as FiltrosExplorar['nivel'] })} className="mt-1 w-full rounded border border-stone-300 px-2 py-1.5">
           {NIVELES.map((n) => <option key={n} value={n}>{NIVEL_LABEL[n]}</option>)}
         </select>
-        <span className="text-xs text-stone-400">Cambiar el nivel requiere elegir una categoría de ese nivel.</span>
+        <span className="text-xs text-stone-400">Al cambiar de nivel se mantiene la categoría: sube al padre, o baja al hijo con más establecimientos.</span>
       </label>
 
       <fieldset>

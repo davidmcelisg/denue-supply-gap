@@ -512,6 +512,11 @@ Changing any filter or `orden` resets `pagina` to 1.
 
 **UI rules**
 - `confiable === false` → greyed row with tooltip; never ranked first.
+- Changing `nivel` in `/explorar` keeps the category by walking the SCIAN
+  hierarchy: up to the parent, or down to the child with the most
+  establishments in the selected entidades. The page resolves it server-side and
+  `redirect()`s so the URL stays canonical. An unknown code resolves to null and
+  falls through to the empty state.
 - `/ageb` ranks every node of the entidad (~900 clases, most of them zero). It
   renders the first `DETALLE_SIZE` (50) with a `?todas=1` escape hatch. Without
   the limit the page is 2.3 MB of mostly-zero rows and the readable answer is
