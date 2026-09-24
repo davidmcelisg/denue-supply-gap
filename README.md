@@ -34,7 +34,7 @@ ingresos, tráfico ni rentabilidad, y el producto nunca los afirma.
 de datos oficial creada por el INEGI que contiene información detallada sobre
 millones de negocios y establecimientos activos en México.
 
-- Para consumir estos datos se usa la descarga masiva (adhoc) en lugar de la API
+- Para consumir estos datos se usa la descarga masiva en lugar de llamar a la API
   (ya que esta no regresa la clave AGEB).
 - Ejemplo: `{nombre: "COMBITACOS", clase_id: 722514 ("taquerías"), ageb_key: 1903900014233...}`
 
